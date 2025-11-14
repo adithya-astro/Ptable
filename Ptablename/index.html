@@ -211,10 +211,21 @@
             'mc': { name: 'Moscovium', number: 115, mass: 288 }, 'lv': { name: 'Livermorium', number: 116, mass: 293 },
             'ts': { name: 'Tennessine', number: 117, mass: 294 }, 'og': { name: 'Oganesson', number: 118, mass: 294 },
 
-            // Add some common single-letter symbols if not already covered by two-letter priority
-            // These would only be matched if a two-letter combo isn't found
-            'a': { name: 'Alpha', number: 'α', mass: '•' }, // Placeholder for 'A'
-            'l': { name: 'Lepton', number: 'ℓ', mass: '•' } // Placeholder for 'L'
+            // --- THIS IS THE MODIFIED BLOCK ---
+            // Dummy names for single letters not already used as elements
+            'a': { name: 'Alpha', number: 'α', mass: '•' },
+            'd': { name: 'Delta', number: 'δ', mass: '•' },
+            'e': { name: 'Electron', number: 'e⁻', mass: '•' },
+            'g': { name: 'Gamma', number: 'γ', mass: '•' },
+            'j': { name: 'Joule', number: 'J', mass: '•' },
+            'l': { name: 'Lepton', number: 'ℓ', mass: '•' },
+            'm': { name: 'Muon', number: 'μ', mass: '•' },
+            'q': { name: 'Quark', number: 'q', mass: '•' },
+            'r': { name: 'Rho', number: 'ρ', mass: '•' },
+            't': { name: 'Tau', number: 'τ', mass: '•' },
+            'x': { name: 'X-Ray', number: 'X', mass: '•' },
+            'z': { name: 'Zeta', number: 'ζ', mass: '•' }
+            // --- END OF MODIFIED BLOCK ---
         };
         
         function generatePeriodicName() {
@@ -269,7 +280,7 @@
                         elementData = periodicTable[symbol];
                         i += 1;
                     } else {
-                        // If no match, use the original character
+                        // If no match, use the original character (e.g., '?', '&', '1')
                         symbol = line.substring(i, i + 1);
                         i += 1;
                     }
@@ -286,6 +297,7 @@
                     elementDiv.style.backgroundColor = color;
 
                     if (elementData) {
+                        // This block now handles REAL elements AND our dummy letter elements
                         const topRowDiv = document.createElement('div');
                         topRowDiv.classList.add('element-top-row');
 
@@ -297,7 +309,8 @@
 
                         const massNumberSpan = document.createElement('div');
                         massNumberSpan.classList.add('mass-number');
-                        massNumberSpan.textContent = Math.round(elementData.mass);
+                        // Round mass if it's a number, otherwise display as is (for '•')
+                        massNumberSpan.textContent = typeof elementData.mass === 'number' ? Math.round(elementData.mass) : elementData.mass;
                         massNumberSpan.style.fontSize = `${16 * scaleFactor}px`;
                         topRowDiv.appendChild(massNumberSpan);
 
@@ -314,14 +327,36 @@
                         nameSpan.textContent = elementData.name;
                         nameSpan.style.fontSize = `${12 * scaleFactor}px`; // Slightly smaller name to guarantee fit
                         elementDiv.appendChild(nameSpan);
-                    } else { // Fallback for letters not in the periodic table
+                    } else { 
+                        // Fallback for non-alphabet characters (e.g., '?', '1', '&')
+                        const topRowDiv = document.createElement('div');
+                        topRowDiv.classList.add('element-top-row');
+
+                        const atomicNumberSpan = document.createElement('div');
+                        atomicNumberSpan.classList.add('atomic-number');
+                        atomicNumberSpan.textContent = '?'; // Dummy number
+                        atomicNumberSpan.style.fontSize = `${16 * scaleFactor}px`;
+                        topRowDiv.appendChild(atomicNumberSpan);
+
+                        const massNumberSpan = document.createElement('div');
+                        massNumberSpan.classList.add('mass-number');
+                        massNumberSpan.textContent = '•'; // Dummy mass
+                        massNumberSpan.style.fontSize = `${16 * scaleFactor}px`;
+                        topRowDiv.appendChild(massNumberSpan);
+
+                        elementDiv.appendChild(topRowDiv);
+
                         const symbolSpan = document.createElement('div');
                         symbolSpan.classList.add('symbol');
                         symbolSpan.textContent = symbol; // Keep original case
-                        symbolSpan.style.fontSize = `${48 * scaleFactor}px`;
-                        // Center fallback text vertically
-                        symbolSpan.style.lineHeight = `${elementSize}px`;
+                        symbolSpan.style.fontSize = `${40 * scaleFactor}px`; // Match the 'if' block's scaled size
                         elementDiv.appendChild(symbolSpan);
+                        
+                        const nameSpan = document.createElement('div');
+                        nameSpan.classList.add('element-name');
+                        nameSpan.textContent = "Symbol"; // Generic name for unknown symbols
+                        nameSpan.style.fontSize = `${12 * scaleFactor}px`; // Match the 'if' block's scaled size
+                        elementDiv.appendChild(nameSpan);
                     }
                     
                     nameDisplay.appendChild(elementDiv);
