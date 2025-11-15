@@ -271,7 +271,7 @@
         };
         
         function generatePeriodicName() {
-            const nameInput = document.getElementById('name-input').value; // Keep case for fallback
+            const nameInput = document.getElementById('name-input').value;
             const nameDisplay = document.getElementById('name-display');
             nameDisplay.innerHTML = '';
 
@@ -284,8 +284,12 @@
                 let elementCount = 0;
                 const lineLower = line.toLowerCase();
                 while (i < line.length) {
-                    if (i + 1 < line.length && periodicTable[lineLower.substring(i, i + 2)]) {
+                    if (lineLower.substring(i, i + 1) === ' ') { // Handle space in pre-calculation
+                        i += 1;
+                    } else if (i + 1 < line.length && periodicTable[lineLower.substring(i, i + 2)]) {
                         i += 2;
+                    } else if (periodicTable[lineLower.substring(i, i + 1)]) {
+                        i += 1;
                     } else {
                         i += 1;
                     }
@@ -297,9 +301,8 @@
             });
 
             // --- SIZING ---
-            // Start scaling down after 6 elements, with a minimum size of 40%
             const scaleFactor = Math.max(0.4, 1 - (maxElementsOnLine - 6) * 0.1);
-            const baseSize = 100; // The original size of the element box
+            const baseSize = 100;
             const elementSize = baseSize * scaleFactor;
 
             const neonColors = ['#FFC107', '#3F51B5', '#9C27B0', '#F44336', '#4CAF50', '#FF9800', '#00BCD4', '#607D8B'];
@@ -311,97 +314,108 @@
                 while (i < line.length) {
                     let symbol = '';
                     let elementData = null;
+                    let isSpace = false;
 
-                    // Check for two-letter symbol first
-                    if (i + 1 < line.length && periodicTable[lineLower.substring(i, i + 2)]) {
+                    if (lineLower.substring(i, i + 1) === ' ') { // Handle space
+                        symbol = ' ';
+                        isSpace = true;
+                        i += 1;
+                    } else if (i + 1 < line.length && periodicTable[lineLower.substring(i, i + 2)]) {
                         symbol = lineLower.substring(i, i + 2);
                         elementData = periodicTable[symbol];
                         i += 2;
-                    } else if (periodicTable[lineLower.substring(i, i + 1)]) { // Check for one-letter symbol
+                    } else if (periodicTable[lineLower.substring(i, i + 1)]) {
                         symbol = lineLower.substring(i, i + 1);
                         elementData = periodicTable[symbol];
                         i += 1;
                     } else {
-                        // If no match, use the original character (e.g., '?', '&', '1')
                         symbol = line.substring(i, i + 1);
                         i += 1;
                     }
                     
-                    const elementDiv = document.createElement('div');
-                    elementDiv.classList.add('element');
-                    
-                    // Apply dynamic size
-                    elementDiv.style.width = `${elementSize}px`;
-                    elementDiv.style.height = `${elementSize}px`;
-
-                    const color = neonColors[colorIndex % neonColors.length];
-                    colorIndex++;
-                    elementDiv.style.backgroundColor = color;
-
-                    if (elementData) {
-                        // This block now handles REAL elements AND our dummy letter elements
-                        const topRowDiv = document.createElement('div');
-                        topRowDiv.classList.add('element-top-row');
-
-                        const atomicNumberSpan = document.createElement('div');
-                        atomicNumberSpan.classList.add('atomic-number');
-                        atomicNumberSpan.textContent = elementData.number;
-                        atomicNumberSpan.style.fontSize = `${16 * scaleFactor}px`;
-                        topRowDiv.appendChild(atomicNumberSpan);
-
-                        const massNumberSpan = document.createElement('div');
-                        massNumberSpan.classList.add('mass-number');
-                        // Round mass if it's a number, otherwise display as is (for '•')
-                        massNumberSpan.textContent = typeof elementData.mass === 'number' ? Math.round(elementData.mass) : elementData.mass;
-                        massNumberSpan.style.fontSize = `${16 * scaleFactor}px`;
-                        topRowDiv.appendChild(massNumberSpan);
-
-                        elementDiv.appendChild(topRowDiv);
-
-                        const symbolSpan = document.createElement('div');
-                        symbolSpan.classList.add('symbol');
-                        symbolSpan.textContent = symbol.charAt(0).toUpperCase() + symbol.slice(1);
-                        symbolSpan.style.fontSize = `${40 * scaleFactor}px`; // Slightly smaller symbol to guarantee fit
-                        elementDiv.appendChild(symbolSpan);
+                    if (isSpace) {
+                        const spaceDiv = document.createElement('div');
+                        spaceDiv.style.width = `${elementSize / 2}px`; // Half the width of an element
+                        spaceDiv.style.height = `${elementSize}px`;
+                        spaceDiv.style.display = 'inline-block';
+                        nameDisplay.appendChild(spaceDiv);
+                    } else {
+                        const elementDiv = document.createElement('div');
+                        elementDiv.classList.add('element');
                         
-                        const nameSpan = document.createElement('div');
-                        nameSpan.classList.add('element-name');
-                        nameSpan.textContent = elementData.name;
-                        nameSpan.style.fontSize = `${12 * scaleFactor}px`; // Slightly smaller name to guarantee fit
-                        elementDiv.appendChild(nameSpan);
-                    } else { 
-                        // Fallback for non-alphabet characters (e.g., '?', '1', '&')
-                        const topRowDiv = document.createElement('div');
-                        topRowDiv.classList.add('element-top-row');
+                        // Apply dynamic size
+                        elementDiv.style.width = `${elementSize}px`;
+                        elementDiv.style.height = `${elementSize}px`;
 
-                        const atomicNumberSpan = document.createElement('div');
-                        atomicNumberSpan.classList.add('atomic-number');
-                        atomicNumberSpan.textContent = '?'; // Dummy number
-                        atomicNumberSpan.style.fontSize = `${16 * scaleFactor}px`;
-                        topRowDiv.appendChild(atomicNumberSpan);
+                        const color = neonColors[colorIndex % neonColors.length];
+                        colorIndex++;
+                        elementDiv.style.backgroundColor = color;
 
-                        const massNumberSpan = document.createElement('div');
-                        massNumberSpan.classList.add('mass-number');
-                        massNumberSpan.textContent = '•'; // Dummy mass
-                        massNumberSpan.style.fontSize = `${16 * scaleFactor}px`;
-                        topRowDiv.appendChild(massNumberSpan);
+                        if (elementData) {
+                            // This block now handles REAL elements AND our dummy letter elements
+                            const topRowDiv = document.createElement('div');
+                            topRowDiv.classList.add('element-top-row');
 
-                        elementDiv.appendChild(topRowDiv);
+                            const atomicNumberSpan = document.createElement('div');
+                            atomicNumberSpan.classList.add('atomic-number');
+                            atomicNumberSpan.textContent = elementData.number;
+                            atomicNumberSpan.style.fontSize = `${16 * scaleFactor}px`;
+                            topRowDiv.appendChild(atomicNumberSpan);
 
-                        const symbolSpan = document.createElement('div');
-                        symbolSpan.classList.add('symbol');
-                        symbolSpan.textContent = symbol; // Keep original case
-                        symbolSpan.style.fontSize = `${40 * scaleFactor}px`; // Match the 'if' block's scaled size
-                        elementDiv.appendChild(symbolSpan);
+                            const massNumberSpan = document.createElement('div');
+                            massNumberSpan.classList.add('mass-number');
+                            // Round mass if it's a number, otherwise display as is (for '•')
+                            massNumberSpan.textContent = typeof elementData.mass === 'number' ? Math.round(elementData.mass) : elementData.mass;
+                            massNumberSpan.style.fontSize = `${16 * scaleFactor}px`;
+                            topRowDiv.appendChild(massNumberSpan);
+
+                            elementDiv.appendChild(topRowDiv);
+
+                            const symbolSpan = document.createElement('div');
+                            symbolSpan.classList.add('symbol');
+                            symbolSpan.textContent = symbol.charAt(0).toUpperCase() + symbol.slice(1);
+                            symbolSpan.style.fontSize = `${40 * scaleFactor}px`; // Slightly smaller symbol to guarantee fit
+                            elementDiv.appendChild(symbolSpan);
+                            
+                            const nameSpan = document.createElement('div');
+                            nameSpan.classList.add('element-name');
+                            nameSpan.textContent = elementData.name;
+                            nameSpan.style.fontSize = `${12 * scaleFactor}px`; // Slightly smaller name to guarantee fit
+                            elementDiv.appendChild(nameSpan);
+                        } else { 
+                            // Fallback for non-alphabet characters (e.g., '?', '1', '&')
+                            const topRowDiv = document.createElement('div');
+                            topRowDiv.classList.add('element-top-row');
+
+                            const atomicNumberSpan = document.createElement('div');
+                            atomicNumberSpan.classList.add('atomic-number');
+                            atomicNumberSpan.textContent = '?'; // Dummy number
+                            atomicNumberSpan.style.fontSize = `${16 * scaleFactor}px`;
+                            topRowDiv.appendChild(atomicNumberSpan);
+
+                            const massNumberSpan = document.createElement('div');
+                            massNumberSpan.classList.add('mass-number');
+                            massNumberSpan.textContent = '•'; // Dummy mass
+                            massNumberSpan.style.fontSize = `${16 * scaleFactor}px`;
+                            topRowDiv.appendChild(massNumberSpan);
+
+                            elementDiv.appendChild(topRowDiv);
+
+                            const symbolSpan = document.createElement('div');
+                            symbolSpan.classList.add('symbol');
+                            symbolSpan.textContent = symbol; // Keep original case
+                            symbolSpan.style.fontSize = `${40 * scaleFactor}px`; // Match the 'if' block's scaled size
+                            elementDiv.appendChild(symbolSpan);
+                            
+                            const nameSpan = document.createElement('div');
+                            nameSpan.classList.add('element-name');
+                            nameSpan.textContent = "Symbol"; // Generic name for unknown symbols
+                            nameSpan.style.fontSize = `${12 * scaleFactor}px`; // Match the 'if' block's scaled size
+                            elementDiv.appendChild(nameSpan);
+                        }
                         
-                        const nameSpan = document.createElement('div');
-                        nameSpan.classList.add('element-name');
-                        nameSpan.textContent = "Symbol"; // Generic name for unknown symbols
-                        nameSpan.style.fontSize = `${12 * scaleFactor}px`; // Match the 'if' block's scaled size
-                        elementDiv.appendChild(nameSpan);
+                        nameDisplay.appendChild(elementDiv);
                     }
-                    
-                    nameDisplay.appendChild(elementDiv);
                 }
 
                 // Add line break element if it's not the last line
