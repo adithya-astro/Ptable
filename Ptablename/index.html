@@ -129,6 +129,8 @@
     <div id="controls">
         <input type="text" id="name-input" placeholder="Enter your name">
         <button onclick="generatePeriodicName()">Generate</button>
+        <input type="number" id="pdf-width-mm" placeholder="Width (mm)">
+        <input type="number" id="pdf-height-mm" placeholder="Height (mm)">
         <button onclick="downloadPDF()">Download as PDF</button>
     </div>
 
@@ -137,15 +139,34 @@
 
         function downloadPDF() {
             const capture = document.querySelector('#container');
+            const widthMm = document.getElementById('pdf-width-mm').value;
+            const heightMm = document.getElementById('pdf-height-mm').value;
+
             // Use a higher scale to improve resolution
             html2canvas(capture, { scale: 2 }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                const doc = new jsPDF({
-                    orientation: 'landscape',
-                    unit: 'px',
-                    format: [canvas.width, canvas.height]
-                });
-                doc.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                
+                let doc;
+                if (widthMm && heightMm && !isNaN(parseFloat(widthMm)) && !isNaN(parseFloat(heightMm))) {
+                    // User has specified valid dimensions in mm
+                    const pdfWidth = parseFloat(widthMm);
+                    const pdfHeight = parseFloat(heightMm);
+                    doc = new jsPDF({
+                        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                        unit: 'mm',
+                        format: [pdfWidth, pdfHeight]
+                    });
+                    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                } else {
+                    // Default behavior (use pixel dimensions of the canvas)
+                    doc = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'px',
+                        format: [canvas.width, canvas.height]
+                    });
+                    doc.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                }
+                
                 doc.save('periodic-name.pdf');
             });
         }
