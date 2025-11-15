@@ -139,35 +139,56 @@
 
         function downloadPDF() {
             const capture = document.querySelector('#container');
-            const widthMm = document.getElementById('pdf-width-mm').value;
-            const heightMm = document.getElementById('pdf-height-mm').value;
+            const imageWidthMm = document.getElementById('pdf-width-mm').value;
+            const imageHeightMm = document.getElementById('pdf-height-mm').value;
+
+            // A4 dimensions in mm
+            const a4WidthMm = 210;
+            const a4HeightMm = 297;
 
             // Use a higher scale to improve resolution
             html2canvas(capture, { scale: 2 }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
                 
-                let doc;
-                if (widthMm && heightMm && !isNaN(parseFloat(widthMm)) && !isNaN(parseFloat(heightMm))) {
-                    // User has specified valid dimensions in mm
-                    const pdfWidth = parseFloat(widthMm);
-                    const pdfHeight = parseFloat(heightMm);
-                    doc = new jsPDF({
-                        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
-                        unit: 'mm',
-                        format: [pdfWidth, pdfHeight]
-                    });
-                    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                // Always create an A4 PDF in portrait
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                let pdfImageWidth, pdfImageHeight, x, y;
+
+                if (imageWidthMm && imageHeightMm && !isNaN(parseFloat(imageWidthMm)) && !isNaN(parseFloat(imageHeightMm))) {
+                    // User has specified valid dimensions for the image
+                    pdfImageWidth = parseFloat(imageWidthMm);
+                    pdfImageHeight = parseFloat(imageHeightMm);
+
+                    // Center horizontally, align top vertically
+                    x = (a4WidthMm - pdfImageWidth) / 2;
+                    y = 10; // 10mm from the top
+
                 } else {
-                    // Default behavior (use pixel dimensions of the canvas)
-                    doc = new jsPDF({
-                        orientation: 'landscape',
-                        unit: 'px',
-                        format: [canvas.width, canvas.height]
-                    });
-                    doc.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                    // Default behavior if no size is given: fit image to A4 width, maintaining aspect ratio
+                    const canvasAspectRatio = canvas.width / canvas.height;
+                    pdfImageWidth = a4WidthMm - 20; // A4 width with 10mm margin on each side
+                    pdfImageHeight = pdfImageWidth / canvasAspectRatio;
+                    
+                    // Center horizontally, align top vertically
+                    x = 10; // 10mm margin
+                    y = 10; // 10mm from the top
                 }
+
+                // Add a check to prevent image being placed off-page if too large
+                if (x < 0) x = 0;
+                if (y < 0) y = 0;
+                if (pdfImageWidth > a4WidthMm) pdfImageWidth = a4WidthMm;
+                if (pdfImageHeight > a4HeightMm) pdfImageHeight = a4HeightMm;
+
+                // Add the image, scaled to the calculated dimensions
+                doc.addImage(imgData, 'PNG', x, y, pdfImageWidth, pdfImageHeight);
                 
-                doc.save('periodic-name.pdf');
+                doc.save('periodic-name-a4.pdf');
             });
         }
 
